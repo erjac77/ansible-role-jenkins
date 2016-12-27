@@ -1,0 +1,27 @@
+---
+
+- name: Restart Jenkins container
+  docker_container:
+    name: "{{ jenkins_container_name }}"
+    image: "{{ jenkins_container_image }}"
+    published_ports: "{{ jenkins_container_host_port }}:{{ jenkins_container_container_port }}"
+    state: started
+    restart: yes
+    volumes:
+      - "{{ jenkins_container_data_volume }}:/var/log/jenkins"
+      - "{{ jenkins_container_data_volume }}:/var/jenkins_home"
+    env:
+      JAVA_OPTS: "{{ jenkins_java_opts }}"
+  register: jenkins_container_result
+
+- name: Restart Jenkins
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/{{ 'restart' if jenkins_force_restart else 'safeRestart' }}"
+    method: POST
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    body: "{{ jenkins_crumb_token }}"
+    status_code: [302, 503]
+  register: jenkins_restart_resp
+  changed_when: jenkins_restart_resp.status == 302 or jenkins_restart_resp.status == 503

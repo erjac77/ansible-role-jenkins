@@ -1,0 +1,38 @@
+---
+
+- name: Get jobs
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/api/json?tree=jobs[name]&{{ jenkins_crumb_token }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: jenkins_get_jobs_resp
+
+- name: Create jobs
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/createItem?name={{ item.name }}&{{ jenkins_crumb_token }}"
+    method: POST
+    HEADER_Content-Type: application/xml
+    body: "{{ item.config }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+  register: jenkins_create_job_resp
+  when: item.name not in jenkins_get_jobs_resp.json.jobs|map(attribute='name')|list
+  with_items: "{{ jenkins_jobs }}"
+  changed_when: jenkins_create_job_resp.status == 200
+
+- name: Update jobs
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/job/{{ item.name }}/config.xml?{{ jenkins_crumb_token }}"
+    method: POST
+    HEADER_Content-Type: application/xml
+    body: "{{ item.config }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+  register: jenkins_update_job_resp
+  when: item.name in jenkins_get_jobs_resp.json.jobs|map(attribute='name')|list
+  with_items: "{{ jenkins_jobs }}"
+  changed_when: jenkins_update_job_resp.status == 200

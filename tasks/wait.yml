@@ -1,0 +1,10 @@
+---
+
+- name: Wait for Jenkins to start up
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/"
+    status_code: [200, 403]
+  register: jenkins_startup_resp
+  until: (jenkins_startup_resp is defined) and (jenkins_startup_resp.status == 200 or jenkins_startup_resp.status == 403)
+  retries: "{{ jenkins_connection_retries }}"
+  delay: "{{ jenkins_connection_delay }}"

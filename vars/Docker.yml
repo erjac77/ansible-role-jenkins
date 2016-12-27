@@ -1,0 +1,8 @@
+---
+
+# Jenkins Docker container settings
+jenkins_container_name: jenkins-master
+jenkins_container_image: jenkins
+jenkins_container_host_port: "{{ jenkins_port }}"
+jenkins_container_container_port: 8080
+jenkins_container_data_volume: jenkins-data

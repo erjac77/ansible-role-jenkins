@@ -1,0 +1,9 @@
+---
+
+- name: Gather platform specific variables
+  include_vars: "{{ jenkins_platform }}.yml"
+
+- include: "{{ jenkins_platform }}/setup.yml"
+- include: crumb.yml
+- include: plugins.yml
+- include: jobs.yml

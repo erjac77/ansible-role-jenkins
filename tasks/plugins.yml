@@ -1,0 +1,51 @@
+---
+
+- name: Get installed plugins
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/pluginManager/api/json?tree=plugins[shortName]&{{ jenkins_crumb_token }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: jenkins_get_installed_plugins_resp
+
+- name: Install plugins
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/pluginManager/install?plugin.{{ item }}.default=on&{{ jenkins_crumb_token }}"
+    method: POST
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    status_code: [200, 302]
+  register: jenkins_install_plugin_resp
+  when: item not in jenkins_get_installed_plugins_resp.json.plugins|map(attribute='shortName')|list
+  with_items: "{{ jenkins_plugins }}"
+  changed_when: jenkins_install_plugin_resp.status == 200 or jenkins_install_plugin_resp.status == 302
+
+- name: Wait for plugins to be installed
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/updateCenter/installStatus?{{ jenkins_crumb_token }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: jenkins_install_status_resp
+  until: "'Pending' not in jenkins_install_status_resp.json.data.jobs|map(attribute='installStatus')"
+  retries: "{{ jenkins_connection_retries }}"
+  delay: "{{ jenkins_connection_delay }}"
+
+- name: Get Jenkins update center status
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/updateCenter/api/json?tree=restartRequiredForCompletion&{{ jenkins_crumb_token }}"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: jenkins_update_center_status_resp
+  changed_when: jenkins_update_center_status_resp.json.restartRequiredForCompletion|bool
+  notify: Restart Jenkins
+
+- name: Trigger handlers immediately
+  meta: flush_handlers
+
+- include: wait.yml

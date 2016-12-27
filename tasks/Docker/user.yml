@@ -1,0 +1,20 @@
+---
+
+- name: Generate {{ user_item.username }} user password hash
+  shell: echo -n "{{ user_item.password }}{ansible_jenkins}" | sha256sum - | awk '{ print $1; }'
+  register: jenkins_user_password_hash_output
+  changed_when: false
+
+- name: Generate {{ user_item.username }} user configuration file
+  template:
+    src: user-config.xml.j2
+    dest: /tmp/{{ user_item.username }}-config.xml
+  changed_when: false
+
+- name: Create {{ user_item.username }} user folder
+  shell: "docker exec {{ jenkins_container_name }} mkdir -p /var/jenkins_home/users/{{ user_item.username }}/"
+  ignore_errors: yes
+
+- name: Copy {{ user_item.username }} user configuration file
+  shell: "docker cp /tmp/{{ user_item.username }}-config.xml {{ jenkins_container_name }}:/var/jenkins_home/users/{{ user_item.username }}/config.xml"
+  notify: Restart Jenkins container

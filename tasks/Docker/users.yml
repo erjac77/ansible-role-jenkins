@@ -1,0 +1,11 @@
+---
+
+- name: Remove initialAdminPassword file
+  shell: "docker exec {{ jenkins_container_name }} rm /var/jenkins_home/secrets/initialAdminPassword"
+  ignore_errors: yes
+
+- name: Create users
+  include: user.yml
+  with_items: "{{ jenkins_users }}"
+  loop_control:
+    loop_var: user_item

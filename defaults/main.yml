@@ -1,0 +1,34 @@
+---
+
+# Jenkins host platform
+jenkins_platform: Docker
+#jenkins_platform: "{{ ansible_os_family }}"
+
+# Gogs application general settings
+jenkins_hostname: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+jenkins_port: 8080
+jenkins_java_opts: "-Djenkins.install.runSetupWizard=false"
+jenkins_force_restart: yes
+
+# Jenkins connection timeout settings
+jenkins_connection_retries: 60
+jenkins_connection_delay: 5
+
+# Jenkins admin account settings
+jenkins_admin_username: jenkins
+jenkins_admin_password: jenkins
+jenkins_admin_fullname: Jenkins Administrator
+
+# Jenkins users
+jenkins_users:
+  - { username: "{{ jenkins_admin_username }}", password: "{{ jenkins_admin_password }}", fullname: "{{ jenkins_admin_fullname }}" }
+
+# Jenkins plugins
+jenkins_plugins:
+  - blueocean
+  - git
+  - job-dsl
+  - workflow-aggregator
+
+# Jenkins jobs
+jenkins_jobs: []

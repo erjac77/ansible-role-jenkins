@@ -1,0 +1,14 @@
+---
+
+- name: Get Jenkins crumb
+  uri:
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_port }}/crumbIssuer/api/json"
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    force_basic_auth: yes
+    return_content: yes
+  register: jenkins_crumb_resp
+
+- name: Set crub token fact
+  set_fact:
+    jenkins_crumb_token: "{{ jenkins_crumb_resp.json.crumbRequestField }}={{ jenkins_crumb_resp.json.crumb }}"

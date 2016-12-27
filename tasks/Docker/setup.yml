@@ -1,0 +1,37 @@
+---
+
+- name: Check if Jenkins data volume exists
+  command: "docker volume inspect {{ jenkins_container_data_volume }}"
+  register: jenkins_volume_inspect_output
+  ignore_errors: yes
+  changed_when: false
+
+- name: If not, create it
+  command: "docker volume create --name {{ jenkins_container_data_volume }}"
+  when: jenkins_volume_inspect_output|failed
+
+- name: Start Jenkins container
+  docker_container:
+    name: "{{ jenkins_container_name }}"
+    image: "{{ jenkins_container_image }}"
+    published_ports: "{{ jenkins_container_host_port }}:{{ jenkins_container_container_port }}"
+    state: started
+    volumes:
+      - "{{ jenkins_container_data_volume }}:/var/log/jenkins"
+      - "{{ jenkins_container_data_volume }}:/var/jenkins_home"
+    env:
+      JAVA_OPTS: "{{ jenkins_java_opts }}"
+  register: jenkins_container_result
+
+- include: ./../wait.yml
+
+- include: users.yml
+
+- name: Copy global configuration file
+  shell: "docker cp ./../files/config.xml {{ jenkins_container_name }}:/var/jenkins_home/config.xml"
+  notify: Restart Jenkins container
+
+- name: Trigger handlers immediately
+  meta: flush_handlers
+
+- include: ./../wait.yml
