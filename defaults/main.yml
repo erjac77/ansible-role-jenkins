@@ -7,6 +7,7 @@ jenkins_platform: Docker
 # Gogs application general settings
 jenkins_hostname: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
 jenkins_port: 8080
+jenkins_config_path: "{{ role_path }}/files/config.xml"
 jenkins_java_opts: "-Djenkins.install.runSetupWizard=false"
 jenkins_force_restart: yes
 

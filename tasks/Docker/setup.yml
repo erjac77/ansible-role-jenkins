@@ -28,7 +28,7 @@
 - include: users.yml
 
 - name: Copy global configuration file
-  shell: "docker cp ./../files/config.xml {{ jenkins_container_name }}:/var/jenkins_home/config.xml"
+  shell: "docker cp {{ jenkins_config_path }} {{ jenkins_container_name }}:/var/jenkins_home/config.xml"
   notify: Restart Jenkins container
 
 - name: Trigger handlers immediately
